@@ -32,6 +32,7 @@ const T = {
     siteDesc: 'Незалежна інвестиційна аналітика: розбори компаній, ринків та історичних аналогій із джерелами та застереженнями.',
     blogDesc: 'Усі матеріали блогу: ринки, компанії, історія.',
     nf: 'Такої сторінки немає.', toHome: 'На головну', photoAlt: 'Фото: Oleksandr Nosikov',
+    video: 'Відео', videoDesc: 'Відеорозбори компаній і ринків з каналу на YouTube.', latestVideo: 'Останні відео', allVideo: 'Усі відео →', play: 'Відтворити відео', noVideo: 'Відео з’явиться тут після публікації', watchOn: 'Дивитися також на YouTube', timecodes: 'Зміст',
   },
   ru: {
     htmlLang: 'ru', locale: 'ru_RU', dates: 'ru-RU', label: 'RU',
@@ -52,6 +53,7 @@ const T = {
     siteDesc: 'Независимая инвестиционная аналитика: разборы компаний, рынков и исторических аналогий с источниками и оговорками.',
     blogDesc: 'Все материалы блога: рынки, компании, история.',
     nf: 'Такой страницы нет.', toHome: 'На главную', photoAlt: 'Фото: Oleksandr Nosikov',
+    video: 'Видео', videoDesc: 'Видеоразборы компаний и рынков с канала на YouTube.', latestVideo: 'Последние видео', allVideo: 'Все видео →', play: 'Воспроизвести видео', noVideo: 'Видео появится здесь после публикации', watchOn: 'Смотреть также на YouTube', timecodes: 'Содержание',
   },
 };
 
@@ -84,10 +86,11 @@ function parseMd(file) {
 const ICONS = {
   telegram: '<path d="M21 4 3 11l6 2 2 6 3-4 5 4z"/><path d="m9 13 12-9"/>',
   instagram: '<rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r=".6" fill="currentColor"/>',
+  youtube: '<rect x="2.5" y="6" width="19" height="12" rx="4"/><path d="m10 9.5 5 2.5-5 2.5z"/>',
   threads: '<path d="M16.5 8.5A5 5 0 0 0 12 6c-3 0-5 2.2-5 6s2 6 5 6c2.6 0 4.3-1.4 4.3-3.3 0-2-1.7-3-4.3-3-1.6 0-2.7.7-2.7 1.8 0 1 .9 1.7 2.1 1.7 1.9 0 3-1.2 3-3.6V9"/>',
 };
-const LABEL = { telegram: 'Telegram', instagram: 'Instagram', threads: 'Threads' };
-const socials = ['instagram', 'threads', 'telegram'].filter((k) => cfg.links[k]).map((k) => ({ key: k, label: LABEL[k], url: cfg.links[k] }));
+const LABEL = { telegram: 'Telegram', instagram: 'Instagram', threads: 'Threads', youtube: 'YouTube' };
+const socials = ['youtube', 'instagram', 'threads', 'telegram'].filter((k) => cfg.links[k]).map((k) => ({ key: k, label: LABEL[k], url: cfg.links[k] }));
 const icon = (k) => `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[k]}</svg>`;
 const socialLinks = (withText = false) => socials.map((s) => `<a class="soc" href="${esc(s.url)}" rel="noopener me" aria-label="${s.label}"${withText ? '' : ` title="${s.label}"`}>${icon(s.key)}${withText ? `<span>${s.label}</span>` : ''}</a>`).join('');
 
@@ -104,8 +107,17 @@ for (const l of LANGS) {
       }).filter((p) => showDrafts || !p.draft).sort((a, b) => new Date(b.date) - new Date(a.date))
     : [];
   const about = parseMd(path.join(root, 'content', l, 'about.md'));
-  content[l] = { posts, about };
-  exists[l] = new Set(['/', '/analitika/', '/ob-avtore/', ...posts.map((p) => p.path)]);
+  const vdir = path.join(root, 'content', l, 'videos');
+  const videos = fs.existsSync(vdir)
+    ? fs.readdirSync(vdir).filter((f) => f.endsWith('.md')).map((f) => {
+        const { meta, body } = parseMd(path.join(vdir, f));
+        const slug = meta.slug || f.replace(/\.md$/, '');
+        const id = String(meta.videoId || '').replace(/[^A-Za-z0-9_-]/g, '');
+        return { ...meta, slug, id, html: marked.parse(body), path: `/video/${slug}/` };
+      }).filter((v) => showDrafts || !v.draft).sort((a, b) => new Date(b.date) - new Date(a.date))
+    : [];
+  content[l] = { posts, about, videos };
+  exists[l] = new Set(['/', '/analitika/', '/ob-avtore/', ...posts.map((p) => p.path), ...(videos.length ? ['/video/', ...videos.map((v) => v.path)] : [])]);
 }
 
 const write = (rel, data) => {
@@ -162,6 +174,7 @@ ${ld.map(jsonLd).join('\n')}
     <nav class="main" aria-label="${t.menu}">
       ${nav('/', t.home, 'home')}
       ${nav('/analitika/', t.blog, 'blog')}
+      ${content[l].videos.length ? nav('/video/', t.video, 'video') : ''}
       ${nav('/ob-avtore/', t.about, 'about')}
     </nav>
     ${socials.length ? `<div class="socials">${socialLinks()}</div>` : ''}
@@ -192,6 +205,21 @@ const row = (l, p) => `<article class="entry">
   <p>${esc(p.description || '')}</p>
 </article>`;
 const list = (l, items) => (items.length ? `<div class="entries">${items.map((p) => row(l, p)).join('')}</div>` : `<p class="empty">${T[l].empty}</p>`);
+
+const PLAY = '<svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg>';
+const thumbImg = (v) => (v.id ? `<img src="https://i.ytimg.com/vi/${v.id}/hqdefault.jpg" alt="" loading="lazy">` : '');
+const vcard = (l, v) => `<a class="vcard" href="${pref(l)}${v.path}">
+  <div class="vthumb">${thumbImg(v)}<span class="play">${PLAY}</span>${v.duration ? `<span class="dur">${esc(v.duration)}</span>` : ''}</div>
+  <div class="entry-meta">${fmtDate(l, v.date)}${v.category ? ' · ' + esc(v.category) : ''}</div>
+  <h3>${esc(v.title)}</h3>
+  <p>${esc(v.description || '')}</p>
+</a>`;
+const videoBlock = (l) => {
+  const vs = content[l].videos;
+  if (!vs.length) return '';
+  return `<section class="wrap video-home" aria-labelledby="vh"><div class="sec-row"><h2 class="section-title" id="vh">${T[l].latestVideo}</h2><a href="${pref(l)}/video/">${T[l].allVideo}</a></div><div class="vgrid">${vs.slice(0, 3).map((v) => vcard(l, v)).join('')}</div></section>`;
+};
+const isoDur = (d = '') => { const m = String(d).match(/^(?:(\d+):)?(\d+):(\d+)$/); if (!m) return ''; return `PT${m[1] ? m[1] + 'H' : ''}${+m[2]}M${+m[3]}S`; };
 
 let nlId = 0;
 function signup(l) {
@@ -225,7 +253,7 @@ const addSitemap = (p) => sitemapEntries.set(p, LANGS.filter((x) => exists[x].ha
 
 for (const l of LANGS) {
   const t = T[l];
-  const { posts, about } = content[l];
+  const { posts, about, videos } = content[l];
   const P = pref(l);
   const tgBtn = cfg.links.telegram ? `<a class="btn outline" href="${esc(cfg.links.telegram)}" rel="noopener">${t.subTg}</a>` : '';
 
@@ -246,6 +274,7 @@ for (const l of LANGS) {
 ${list(l, posts.slice(0, 5))}
 ${posts.length ? `<p class="more"><a href="${P}/analitika/">${t.all}</a></p>` : ''}
 </div>
+${videoBlock(l)}
 ${signup(l)}
 <div class="narrow">
 <section class="about-strip" aria-labelledby="ab">
@@ -307,10 +336,50 @@ ${signup(l)}`,
 ${signup(l)}`,
   }));
 
+  // видео: каталог и страницы
+  if (videos.length) {
+    write(`${P}/video/index.html`.replace(/^\//, ''), layout(l, {
+      title: t.video, description: t.videoDesc, path: '/video/', current: 'video',
+      ld: [{ '@context': 'https://schema.org', '@type': 'CollectionPage', name: t.video, url: `${base}${P}/video/`, inLanguage: t.htmlLang }],
+      body: `<div class="wrap">
+<div class="crumbs"><a href="${P}/">${t.home}</a> / ${t.video}</div>
+<h1 class="page-title">${t.video}</h1>
+<div class="vgrid" style="padding:32px 0 64px">${videos.map((v) => vcard(l, v)).join('')}</div>
+</div>
+${signup(l)}`,
+    }));
+    for (const v of videos) {
+      const url = `${base}${P}${v.path}`;
+      const ld = [{ '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [
+        { '@type': 'ListItem', position: 1, name: t.home, item: `${base}${P}/` },
+        { '@type': 'ListItem', position: 2, name: t.video, item: `${base}${P}/video/` },
+        { '@type': 'ListItem', position: 3, name: v.title, item: url },
+      ] }];
+      if (v.id) ld.push({ '@context': 'https://schema.org', '@type': 'VideoObject', name: v.title, description: v.description || v.title, thumbnailUrl: `https://i.ytimg.com/vi/${v.id}/hqdefault.jpg`, uploadDate: v.date, embedUrl: `https://www.youtube-nocookie.com/embed/${v.id}`, ...(isoDur(v.duration) ? { duration: isoDur(v.duration) } : {}), inLanguage: t.htmlLang });
+      const player = v.id
+        ? `<div class="player" data-id="${v.id}" data-title="${esc(v.title)}">${thumbImg(v)}<button class="play-btn" type="button" aria-label="${t.play}"><span class="play">${PLAY}</span></button></div>
+<script>document.querySelectorAll('.player[data-id]').forEach(function(p){p.querySelector('button').addEventListener('click',function(){p.innerHTML='<iframe src="https://www.youtube-nocookie.com/embed/'+p.dataset.id+'?autoplay=1&rel=0" title="'+p.dataset.title+'" allow="accelerometer; autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>';});});</script>`
+        : `<div class="player empty"><span class="play">${PLAY}</span><p>${t.noVideo}</p></div>`;
+      write(`${P}${v.path}index.html`.replace(/^\//, ''), layout(l, {
+        title: v.title, description: v.description || t.videoDesc, path: v.path, type: 'video.other', current: 'video', noindex: !!v.draft, ld,
+        body: `<div class="narrow">
+<div class="crumbs"><a href="${P}/">${t.home}</a> / <a href="${P}/video/">${t.video}</a></div>
+<article class="post">
+  <div class="meta">${esc(v.category || '')}${v.category ? ' · ' : ''}${fmtDate(l, v.date)}${v.duration ? ' · ' + esc(v.duration) : ''}</div>
+  <h1>${esc(v.title)}</h1>
+  ${player}
+  <div class="prose">${v.html}</div>
+</article>
+</div>
+${signup(l)}`,
+      }));
+    }
+  }
+
   // RSS
   write(`${P}/rss.xml`.replace(/^\//, ''), `<?xml version="1.0" encoding="UTF-8"?>\n<rss version="2.0"><channel><title>${esc(NAME)}</title><link>${base}${P}/</link><description>${esc(t.siteDesc)}</description><language>${t.htmlLang}</language>\n${posts.filter((p) => !p.draft).map((p) => `<item><title>${esc(p.title)}</title><link>${base}${P}${p.path}</link><guid>${base}${P}${p.path}</guid><pubDate>${new Date(p.date).toUTCString()}</pubDate><description>${esc(p.description || '')}</description></item>`).join('\n')}\n</channel></rss>\n`);
 
-  for (const p of ['/', '/analitika/', '/ob-avtore/', ...posts.filter((x) => !x.draft).map((x) => x.path)]) addSitemap(p);
+  for (const p of ['/', '/analitika/', '/ob-avtore/', ...posts.filter((x) => !x.draft).map((x) => x.path), ...(videos.length ? ['/video/', ...videos.filter((x) => !x.draft).map((x) => x.path)] : [])]) addSitemap(p);
 }
 
 // 404 (один на сайт, на языке по умолчанию)
