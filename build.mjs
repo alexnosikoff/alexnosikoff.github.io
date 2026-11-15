@@ -45,12 +45,12 @@ const posts = fs.existsSync(postsDir)
   : [];
 
 // --- общий каркас страницы
-function layout({ title, description, path: p, body, ld = [], type = 'website', current = '', noindex = false }) {
+function layout({ title, description, path: p, body, hero = '', ld = [], type = 'website', current = '', noindex = false }) {
   const full = title === cfg.name ? title : `${title} | ${cfg.name}`;
   const canonical = base + p;
   const L = cfg.links;
   const social = [['Telegram', L.telegram], ['Threads', L.threads], ['LinkedIn', L.linkedin]].filter(([, u]) => u);
-  const tg = L.telegram ? `<a class="btn small" href="${esc(L.telegram)}" rel="noopener">Telegram</a>` : '';
+  const tg = L.telegram ? `<a class="pill" href="${esc(L.telegram)}" rel="noopener">Telegram</a>` : '';
   const nav = (href, label, key) => `<a href="${href}"${current === key ? ' aria-current="page"' : ''}>${label}</a>`;
   return `<!doctype html>
 <html lang="${cfg.lang}">
@@ -71,42 +71,48 @@ ${noindex ? '<meta name="robots" content="noindex">' : ''}
 <link rel="alternate" type="application/rss+xml" title="${esc(cfg.name)}" href="/rss.xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/style.css">
 ${ld.map(jsonLd).join('\n')}
 </head>
 <body>
+<a class="skip" href="#content">Перейти к содержимому</a>
+<div class="band-dark">
 <div class="wrap">
 <header class="top">
-  <a class="logo" href="/">${esc(cfg.name)}<span>_</span></a>
+  <a class="logo" href="/">${esc(cfg.name)}</a>
   <nav class="main" aria-label="Основное меню">
-    ${nav('/', '/главная', 'home')}
-    ${nav('/analitika/', '/аналитика', 'blog')}
-    ${nav('/ob-avtore/', '/об-авторе', 'about')}
+    ${nav('/', 'Главная', 'home')}
+    ${nav('/analitika/', 'Аналитика', 'blog')}
+    ${nav('/ob-avtore/', 'Об авторе', 'about')}
     ${tg}
   </nav>
 </header>
-<main>
+</div>
+${hero || ''}
+</div>
+<main id="content">
 ${body}
 </main>
 <footer class="bottom">
+<div class="wrap">
   ${social.length ? `<div class="soc">${social.map(([n, u]) => `<a href="${esc(u)}" rel="noopener">${n}</a>`).join('')}</div>` : ''}
   <p>${esc(cfg.disclaimer)}</p>
   <p>© ${new Date().getFullYear()} ${esc(cfg.author.name)}</p>
-</footer>
 </div>
+</footer>
 </body>
 </html>`;
 }
 
-const row = (p) => `<a class="row" href="${p.url}">
-  <span class="cat">${esc(p.category || '')}</span>
-  <span><span class="row-title">${esc(p.title)}</span><span class="row-desc">${esc(p.description || '')}</span></span>
-  <span class="time">${p.minutes} мин</span>
-</a>`;
+const row = (p) => `<article class="entry">
+  <div class="entry-meta">${fmtDate(p.date)}${p.category ? ' · ' + esc(p.category) : ''} · ${p.minutes} мин</div>
+  <h3><a href="${p.url}">${esc(p.title)}</a></h3>
+  <p>${esc(p.description || '')}</p>
+</article>`;
 
 const list = (items) => items.length
-  ? `<div class="list">${items.map(row).join('')}</div>`
+  ? `<div class="entries">${items.map(row).join('')}</div>`
   : `<p class="empty">Первые материалы появятся здесь совсем скоро.</p>`;
 
 const person = {
@@ -127,14 +133,22 @@ const staticDir = path.join(root, 'static');
 if (fs.existsSync(staticDir)) fs.cpSync(staticDir, out, { recursive: true });
 
 const tgBtn = (cls, text) => cfg.links.telegram ? `<a class="btn ${cls}" href="${esc(cfg.links.telegram)}" rel="noopener">${text}</a>` : '';
-const newsletter = cfg.links.newsletter ? `<section class="sub" aria-labelledby="nl">
-  <div><h2 id="nl">Рассылка</h2><p>Новые разборы раз в неделю. Без спама.</p></div>
+// блок подписки: форма рассылки, а если её нет, кнопка Telegram; если нет ничего, блока нет
+let nlId = 0;
+const newsletter = (title = 'Не пропустите новые разборы') => {
+  const id = `nl${++nlId}`;
+  if (cfg.links.newsletter) return `<section class="signup" aria-labelledby="${id}"><div class="narrow">
+  <h2 id="${id}">${esc(title)}</h2><p>Раз в неделю, только материалы блога. Без спама.</p>
   <form action="${esc(cfg.links.newsletter)}" method="post">
-    <label class="sr" for="em">Email</label>
-    <input id="em" name="email" type="email" placeholder="you@email.com" required>
+    <label class="sr" for="${id}e">Email</label>
+    <input id="${id}e" name="email" type="email" placeholder="you@email.com" required>
     <button type="submit">Подписаться</button>
-  </form>
-</section>` : '';
+  </form></div></section>`;
+  if (cfg.links.telegram) return `<section class="signup" aria-labelledby="${id}"><div class="narrow">
+  <h2 id="${id}">${esc(title)}</h2><p>Короткие заметки и анонсы разборов в Telegram-канале.</p>
+  <a class="btn" href="${esc(cfg.links.telegram)}" rel="noopener">Подписаться в Telegram</a></div></section>`;
+  return '';
+};
 
 // --- главная
 write('index.html', layout({
@@ -143,30 +157,37 @@ write('index.html', layout({
     { '@type': 'WebSite', '@id': `${base}/#site`, url: `${base}/`, name: cfg.name, description: cfg.description, inLanguage: cfg.lang, publisher: { '@id': `${base}/#author` } },
     person,
   ] }],
-  body: `<section class="hero">
-  <div class="kicker">// ${esc(cfg.tagline.toLowerCase())}</div>
-  <h1>Смотрим на рынок как на модель, а не как на новости</h1>
-  <p>Разборы компаний, исторические аналогии и честные допущения. Каждый вывод с источником.</p>
-  <div class="cta"><a class="btn primary" href="/analitika/">Читать аналитику</a>${tgBtn('ghost', 'Подписаться в Telegram')}</div>
-</section>
-<div class="sec-head"><h2>Последние материалы</h2><a href="/analitika/">все материалы →</a></div>
-${list(posts.slice(0, 3))}
-<section class="about" aria-labelledby="ab">
+  hero: `<section class="hero"><div class="narrow">
+  <h1>${esc(cfg.name)}</h1>
+  <h2>Разборы компаний, рынков и исторических аналогий. Без хайпа, с источниками и оговорками.</h2>
+  <div class="cta"><a class="btn yellow" href="/analitika/">Читать аналитику</a>${tgBtn('outline', 'Подписаться в Telegram')}</div>
+</div></section>`,
+  body: `<div class="narrow">
+<h2 class="section-title">Последние материалы</h2>
+${list(posts.slice(0, 5))}
+${posts.length ? '<p class="more"><a href="/analitika/">Все материалы →</a></p>' : ''}
+</div>
+${newsletter()}
+<div class="narrow">
+<section class="about-strip" aria-labelledby="ab">
   <div class="ph" role="img" aria-label="Место для фото автора"></div>
   <div><h2 id="ab">Об авторе</h2>
   <p>${esc(cfg.author.name)}, ${esc(cfg.author.jobTitle.toLowerCase())}. Смотрю на компании как на модели: что в них заложено и что можно проверить.</p>
-  <a href="/ob-avtore/">читать дальше →</a></div>
+  <a href="/ob-avtore/">Читать дальше →</a></div>
 </section>
-${newsletter}`,
+</div>`,
 }));
 
 // --- список статей
 write('analitika/index.html', layout({
   title: 'Аналитика', description: 'Все материалы блога: рынки, компании, история.', path: '/analitika/', current: 'blog',
   ld: [{ '@context': 'https://schema.org', '@type': 'CollectionPage', name: 'Аналитика', url: `${base}/analitika/`, inLanguage: cfg.lang }],
-  body: `<div class="crumbs"><a href="/">главная</a> / аналитика</div>
-<div class="hero" style="padding:48px 0 32px"><h1 style="font-size:clamp(32px,5vw,52px)">Аналитика</h1></div>
-${list(posts)}`,
+  body: `<div class="narrow">
+<div class="crumbs"><a href="/">Главная</a> / Аналитика</div>
+<h1 class="page-title">Аналитика</h1>
+${list(posts)}
+</div>
+${newsletter()}`,
 }));
 
 // --- статьи
@@ -184,14 +205,16 @@ for (const p of posts) {
       ] },
       { '@context': 'https://schema.org', ...person },
     ],
-    body: `<div class="crumbs"><a href="/">главная</a> / <a href="/analitika/">аналитика</a></div>
+    body: `<div class="narrow">
+<div class="crumbs"><a href="/">Главная</a> / <a href="/analitika/">Аналитика</a></div>
 <article class="post">
-  <div class="meta">${esc(p.category || '')} · ${fmtDate(p.date)} · ${p.minutes} мин</div>
+  <div class="meta">${esc(p.category || '')}${p.category ? ' · ' : ''}${fmtDate(p.date)} · ${p.minutes} мин</div>
   <h1>${esc(p.title)}</h1>
   ${p.description ? `<p class="lead">${esc(p.description)}</p>` : ''}
   <div class="prose">${p.html}</div>
 </article>
-${newsletter}`,
+</div>
+${newsletter()}`,
   }));
 }
 
@@ -200,12 +223,13 @@ const about = parseMd(path.join(root, 'content', 'about.md'));
 write('ob-avtore/index.html', layout({
   title: 'Об авторе', description: about.meta.description || `${cfg.author.name}: ${cfg.author.jobTitle}.`, path: '/ob-avtore/', current: 'about',
   ld: [{ '@context': 'https://schema.org', '@type': 'ProfilePage', mainEntity: person }],
-  body: `<article class="post"><h1>Об авторе</h1><div class="prose">${marked.parse(about.body)}</div></article>`,
+  body: `<div class="narrow"><article class="post"><h1>Об авторе</h1><div class="prose">${marked.parse(about.body)}</div></article></div>
+${newsletter()}`,
 }));
 
 // --- 404, robots, sitemap, rss
 write('404.html', layout({ title: 'Страница не найдена', description: 'Такой страницы нет.', path: '/404.html', noindex: true,
-  body: `<div class="hero"><h1>404</h1><p>Такой страницы нет.</p><div class="cta"><a class="btn primary" href="/">На главную</a></div></div>` }));
+  body: `<div class="narrow" style="text-align:center;padding:72px 32px"><h1 class="page-title">404</h1><p>Такой страницы нет.</p><p><a class="btn yellow" style="background:#f2c230;color:#15130f" href="/">На главную</a></p></div>` }));
 write('robots.txt', `User-agent: *\nAllow: /\n\nSitemap: ${base}/sitemap.xml\n`);
 const urls = ['/', '/analitika/', '/ob-avtore/', ...posts.filter((p) => !p.draft).map((p) => p.url)];
 write('sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map((u) => `  <url><loc>${base}${u}</loc></url>`).join('\n')}\n</urlset>\n`);
