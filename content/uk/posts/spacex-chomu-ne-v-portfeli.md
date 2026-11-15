@@ -102,12 +102,14 @@ IPO пройшло за ціною [135 $/акцію](https://www.nasdaq.com/art
 - я не хочу, щоб компанія в моєму портфелі фінансувала збиткові напрямки;
 - я не хочу мати в портфелі компанію, яка неймовірно близько пов'язана з урядом і на якій геополітичні тертя відображатимуться дуже сильно.
 
-## Джерела
-
-Дані станом на дату публікації в Telegram (13 серпня 2026 року), якщо не вказано інше.
-
-1. [Space Exploration Technologies, проспект IPO (S-1/A)](https://www.sec.gov/Archives/edgar/data/1181412/000162828026040364/spaceexplorationtechnologib.htm), SEC: накопичений збиток, виручка за сегментами, структура акцій.
-2. [SpaceX finally files IPO prospectus, reveals revenue is up, but losses are too](https://fortune.com/2026/05/20/spacex-finally-files-ipo-prospectus-reveals-revenue-is-up-but-losses-are-too/), Fortune, 20 травня 2026: виручка 2025 року 18,7 млрд $, накопичений дефіцит 41,3 млрд $ на 31.03.2026.
-3. [SpaceX revenue surges 92% to $7.8 billion](https://fortune.com/2026/08/04/spacex-revenue-surges-92-to-7-8-billion-blowing-past-wall-street-expectations-by-nearly-1-billion/), Fortune, 4 серпня 2026: виручка Q2, 12 млн абонентів Starlink, капітальні витрати на AI.
-4. [SpaceX's tradable float could triple by December](https://www.nasdaq.com/articles/spacexs-tradable-float-could-triple-december-history-says-thats-problem-stock), Nasdaq / Motley Fool, 6 серпня 2026: графік розблокування акцій, ціна IPO 135 $, пік 225,64 $.
-5. [$100 billion in SpaceX shares just unlocked](https://247wallst.com/investing/2026/08/06/100-billion-in-spacex-shares-just-unlocked-so-why-isnt-the-stock-crashing/), 24/7 Wall St, 6 серпня 2026: обсяг розблокування, короткі позиції, ціна після звіту.
+<section class="sources">
+<h2>Джерела</h2>
+<p class="sources-note">Дані станом на дату публікації в Telegram (13 серпня 2026 року), якщо не вказано інше.</p>
+<ol class="source-list">
+<li><a class="s-title" href="https://www.sec.gov/Archives/edgar/data/1181412/000162828026040364/spaceexplorationtechnologib.htm" rel="noopener">Space Exploration Technologies: проспект IPO (S-1/A)</a><span class="s-meta"><span class="s-tag">Першоджерело</span><span>SEC</span></span><span class="s-note">Накопичений збиток, виручка за сегментами, структура акцій.</span></li>
+<li><a class="s-title" href="https://fortune.com/2026/05/20/spacex-finally-files-ipo-prospectus-reveals-revenue-is-up-but-losses-are-too/" rel="noopener">SpaceX finally files IPO prospectus, reveals revenue is up, but losses are too</a><span class="s-meta"><span class="s-tag press">Преса</span><span>Fortune</span><span>20 травня 2026</span></span><span class="s-note">Виручка 2025 року 18,7 млрд $, накопичений дефіцит 41,3 млрд $ на 31.03.2026.</span></li>
+<li><a class="s-title" href="https://fortune.com/2026/08/04/spacex-revenue-surges-92-to-7-8-billion-blowing-past-wall-street-expectations-by-nearly-1-billion/" rel="noopener">SpaceX revenue surges 92% to $7.8 billion</a><span class="s-meta"><span class="s-tag press">Преса</span><span>Fortune</span><span>4 серпня 2026</span></span><span class="s-note">Виручка Q2, 12 млн абонентів Starlink, капітальні витрати на AI.</span></li>
+<li><a class="s-title" href="https://www.nasdaq.com/articles/spacexs-tradable-float-could-triple-december-history-says-thats-problem-stock" rel="noopener">SpaceX's tradable float could triple by December</a><span class="s-meta"><span class="s-tag press">Преса</span><span>Nasdaq / Motley Fool</span><span>6 серпня 2026</span></span><span class="s-note">Графік розблокування акцій, ціна IPO 135 $, пік 225,64 $.</span></li>
+<li><a class="s-title" href="https://247wallst.com/investing/2026/08/06/100-billion-in-spacex-shares-just-unlocked-so-why-isnt-the-stock-crashing/" rel="noopener">$100 billion in SpaceX shares just unlocked</a><span class="s-meta"><span class="s-tag press">Преса</span><span>24/7 Wall St</span><span>6 серпня 2026</span></span><span class="s-note">Обсяг розблокування, короткі позиції, ціна після звіту.</span></li>
+</ol>
+</section>
